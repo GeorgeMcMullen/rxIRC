@@ -25,10 +25,5 @@ ACTION commands:
  with the /ME or /Emote commands, like this:
    /me feels a little hungry now.
  
- You can also try to add your own commands into the program. With the way
- it is done, it should be easy to understand also for someone who doesn't
- really know REXX. Just edit the RXIRC EXEC, move to the bottom of the file,
- and turn a page back. You'll see where you can add your lines.
- 
- Good suggestions for action commands are always welcome, send them to me
- by NoteServ or mail.  :)
+ And finally create your own commands with help of the /ALIAS command.
+ See the "SPECIAL" help page.
