@@ -16,7 +16,7 @@
  of the variable X or B, respectively) after a literal string, when the
  string is not intended as a hexadecimal or binary specification."
 */
-
+ 
 /* rxIRC
  * Internet Relay Chat client program for VM/CMS systems
  * written by Carl 'LynX' v. Loesch (loesch@informatik.uni-oldenburg.de)
@@ -26,7 +26,7 @@
  *    Scott Maxell, Juan Courcoul, Rob Blais, Mike Letourneau, Grant Pair
  *    (in historical order mostly).   Thank y'all very much!
  *
- * Extras (Pluses) written by George E. McMullen (GMMBC@cunyvm.cuny.edu)
+ * Extras (Pluses) written by George McMullen
  * Thanks to Carl 'LynX' v. Loesch for his suggestions, ideas, and
  * explanations of code, which made much of the additions possible.
  *
@@ -39,7 +39,7 @@
  * By the way, this is _not_ the source code of rxIRC. There exists a
  * special file IRC PREXX which when run through a preprocessor produces
  * the actual RXIRC EXEC. That file is commented. This one is not.
- */ vers='2.0.Plus (G)'; trace '0'
+ */ vers='2.0.Plus (G)'; trace 'O'
  address "COMMAND"; signal on HALT; "VMFCLEAR"
  cmds='AWAY AWAIT ADMIN CHANNEL CONNECT DEOP DIE HASH INFO ISON JOIN KICK',
    'KILL LIST LINKS LUSERS MODE MAIL MOTD NAMES NICK NOTICE NOTE OPER PASS',
@@ -51,11 +51,11 @@
  have_rxwt=0; who_empty=0; catmode=0; catlist=; abortsource=0; skiplines=0
  jumpcoms=0;sourcenum=0;numons=0;display='display'
  call SET 'display On'
-
+ 
  "EXECIO * CP (STEM PF. STRING QUERY PF"
  do i=1 to pf.0
   a=word(pf.i,2)
-  if a\='UNDEFINED' & a\='RETRIEVE' then,
+  if a/='UNDEFINED' & a/='RETRIEVE' then,
     "CP SET" subword(pf.i,1,2) '!'subword(pf.i,3)
  end
  "EXECIO * CP (STEM QT. STRING QUERY TERM"
@@ -63,7 +63,7 @@
  "CP TERM CHARDEL OFF"
  "CP TERM LINESIZE 130"
  sock=; buffer=; alphalo=xrange('a','z'); alphahi=xrange('A','Z')
- lf='25'x; cr='0d'x; msa='01'x; rev='02'x; beep='2f'x; undl='32'x
+ lf='25'x; cr='0d'x; msa='01'x; rev='02'x; beep='2fx; undl='32'x
  bold='1f'x; hi='1de8'x; lo='1d60'x; yo='1d44'x
  nice.=""; u@n.=; via.=;
  realname=; servername=;
@@ -77,7 +77,7 @@
   if rc >= 2.0 then rc=0
   else rc=28
  end
- if rc\=0 then call BYE "RXSOCKET version 2 required"
+ if rc/=0 then call BYE "RXSOCKET version 2 required"
  do 3
   parse value SOCKET('INITIALIZE', 'rxIRC', 1) with rc . etc
   if rc=2004 then do
@@ -86,7 +86,7 @@
   end
   else leave
  end
- if rc\=0 then call BYE "initialize error:" etc
+ if rc/=0 then call BYE "initialize error:" etc
  parse value SOCKET('GETHOSTNAME') with . hostname
  parse value SOCKET('GETDOMAINNAME') with . domain
  'REXXWAIT TEST'
@@ -94,7 +94,7 @@
   when rc=0 then nop
   when rc=1 then do
    'REXXWAIT LOAD'
-   if rc\=0 then call BYE "REXXWAIT can't be loaded"
+   if rc/=0 then call BYE "REXXWAIT can't be loaded"
   end
   otherwise call BYE "REXXWAIT MODULE required"
  end
@@ -103,7 +103,7 @@
  "NAMEF :NICK RXIRC :SERVER :PORT :LOGGING :QUIET_IGNORE :SHOW_TIME ",
    ":BOLD_CHAR :BEEP_CHAR :LOUD_BEEPS :SHOW_NUMBERS :LIST_ALL :BROWSER",
    "(LIFO FILE RXIRC"
- if rc\=0 then call BYE "missing or unreadable RXIRC NAMES file"
+ if rc/=0 then call BYE "missing or unreadable RXIRC NAMES file"
  pull viewcmd; pull def_listall; pull def_numb; pull def_loud
  parse pull beepch; parse pull boldch; parse pull showtime; pull def_quiet
  pull def_log; parse pull def_port; parse pull def_server
@@ -111,7 +111,7 @@
  if beepch='' then beepch=d2c(0)
  if boldch='' then boldch=d2c(0)
  "GLOBALV SELECT CENV GET IRCNICK IRCSERVER IRCNAME IRCPORT"
-
+ 
  "NAMEFIND :USERID" me ":NICK :NAME :MOTTO :CMDCHAR :IRCNICK :IRCNAME (LIFO"
  if rc=0 then do
   parse pull name; parse pull nick
@@ -122,17 +122,17 @@
   if ircnick="" then ircnick=nick
   if ircname="" then ircname=realname
  end
-
+ 
  parse arg nick server name '('o; upper o
- if nick\='' then ircnick = nick
+ if nick/='' then ircnick = nick
  if ircnick='' then ircnick=me
  capnick = translate(ircnick)
- if server\='' then ircserver=server
+ if server/='' then ircserver=server
  else if ircserver='' then ircserver=def_server
- if name\='' then ircname = name
+ if name/='' then ircname = name
  if ircname='' then ircname=me "at" mynode".bitnet"
  if cmdchar="" then cmdchar="/"
- do while o\=""
+ do while o/=""
   parse var o opt o
   select
    when abbrev("PORT", opt, 1) then parse var o ircport o
@@ -154,13 +154,13 @@
  if datatype(left(ircnick,1))='NUM' then ircnick='u'ircnick
  if ^datatype(showtime,'w') then showtime=80
  if userinfo="" then userinfo="- no info given by user -"
-
+ 
  parse value RESETVALUE('ALL') with rc .
- if rc\=0 then call BYE "problem w/RESETVALUE"
+ if rc/=0 then call BYE "problem w/RESETVALUE"
  parse value SETVALUE('TIME ==:=0:00') with rc .
- if rc\=0 then call BYE "problem w/SETVALUE TIME"
+ if rc/=0 then call BYE "problem w/SETVALUE TIME"
  parse value SETVALUE('MSG IUCV') with rc .
- if rc\=0 then call BYE "problem w/SETVALUE MSG IUCV"
+ if rc/=0 then call BYE "problem w/SETVALUE MSG IUCV"
  call S "rxIRC"hi||vers||yo"- You are" ircnick "("ircname")"
  call S "Logging is" onoff.log"; Audible bells are",
    onoff.loud"; Quiet ignore is" onoff.quiet
@@ -170,15 +170,15 @@
  call S copies("-",79)lo
  do forever
   "IMMCMD STATUS HI"
-  if rc\=0 then call S,
+  if rc/=0 then call S,
     'Sorry, "hi" is a system reserved word. Try an other operating system.'
   parse value WAIT('TIME','CONS','MSG','SOCKET READ' sock) with rc type data
   select
-   when rc\=0 then call BYE "REXXWAIT returning code" rc
+   when rc/=0 then call BYE "REXXWAIT returning code" rc
    when type='SOCKET' then do
     parse value SOCKET('READ', sock) with rc . data
     if rc=54 then call BYE
-    if rc\=0 then call BYE 'socket read error' rc
+    if rc/=0 then call BYE 'socket read error' rc
     buffer = buffer || data
     do forever
      if index(buffer, lf)=0 then leave
@@ -186,7 +186,7 @@
      see=PARSE(strip(in,,cr))
      parse var see com sndr' ### 'eye
      call OUT eye
-     if sndr\='' & sndr\=servername & pos(sndr,v.0)^=0 then
+     if sndr/='' & sndr/=servername & pos(sndr,v.0)^=0 then
             call SET 0 sndr
      see=com
      do i= 0 to 9
@@ -217,7 +217,7 @@
      end
     end
    end
-   when type = 'CONS' then if data\='' then do
+   when type = 'CONS' then if data/='' then do
     rc=time('R')
     call EDIT data
     curll=curll+1; ll.curll=hi||data||lo; k=curll-50; ll.k=;
@@ -229,10 +229,10 @@
     origin=id'@'no
     ni=NICE(origin)
     if FINDM(ignore,origin) | FINDM(ignore,ni) then do
-     if ^quiet & left(data,1)\='*' then call TELL origin '*' ignore_reply
+     if ^quiet & left(data,1)/='*' then call TELL origin '*' ignore_reply
     end; else do
      call OUT hi||ni':'lo||data
-     if away\='' & left(data,1)\='*' then call TELL origin '* away:' away
+     if away/='' & left(data,1)/='*' then call TELL origin '* away:' away
     end
    end
    when type = 'TIME' then do
@@ -251,11 +251,11 @@
   end
  end
  call BYE "a rexx oddity"
-
+ 
 PARSE:
  parse arg a
- if loud & pos(beep,a)\=0 then "BEEP"
- b=; a=translate(a,"%"||beepch||"_",rev||beep||undl);bm=;
+ if loud & pos(beep,a)/=0 then "BEEP"
+ b=; a=translate(a,"%"||beepch||"_",rev||beep||undl); bm=;
  i=1; j=0; do forever; i=index(a,bold,i)
   if i=0 then leave
   if j=0 then a=insert(hi,a,i)
@@ -299,7 +299,7 @@ PARSE:
     if word(g,1)="***" then b=subword(g,2)
     else b=g
     a=; parse var b 'Your host is 'g'['a .
-    if a\='' then servername=g
+    if a/='' then servername=g
    end
    when translate(e)=capnick then do
     if FINDM(ignore,s) | FINDM(ignore,sad) then do
@@ -364,7 +364,7 @@ PARSE:
   when m='317' then b='and has been idle' word(f,2) 'seconds'
   when m='322' then do
    parse var f ch n .
-   if ch\='*' & substr(ch,2,1)\='27'x then do
+   if ch/='*' & substr(ch,2,1)/='27'x then do
     if catmode then do; if n>4 then catlist=ch catlist; end
     else if listall | n>7 then do
      bm=left(ch,13) left(n,4)g
@@ -385,14 +385,14 @@ PARSE:
     if (length(no)+a > 13) then leave
     n=subword(n, 1, words(n)-1)'..'; end
    if (a < 0) then k=hi||n||lo||us"@*"right(no,length(no)+a-1)
-   else if (ch\='*' & a>length(ch)) then
+   else if (ch/='*' & a>length(ch)) then
      k=lo||ch||hi||n||lo||copies(' ',a-length(ch)-1)us"@"no
    else k=hi||n||lo||copies(' ',a)us"@"no
    bm=st ni ch us no n
    call S left(st,3)yo||left(ni,9)k
   end
   when m='353' then do; ch=word(f,2); a=words(g)
-   if ch\='*' & (a>6 | translate(ch)=target) then do
+   if ch/='*' & (a>6 | translate(ch)=target) then do
     bm=left(ch,15)||g
     call OUT hi||left(ch,15)yo||g
    end
@@ -406,17 +406,17 @@ PARSE:
    when f=""|f=s then b=g
    otherwise b=f":" g
   end
-  if s\="" & s\=servername then b='('s')' b
+  if s/="" & s/=servername then b='('s')' b
   if numb then b='{'m'}' b
  end
- if bm=''&b\='' then bm=b
+ if bm=''&b/='' then bm=b
  do jjj=1 to 10
   if word(bm,jjj)^='' then call SET jjj-1 word(bm,jjj)
                       else call UNSET jjj-1
   if jjj>=10 then leave
  end
  return m s '###' translate(b,"@",msa)
-
+ 
 VAR:
  parse arg x
  select
@@ -471,9 +471,9 @@ UNSET:
 EDIT:
  parse arg in
  if left(in,1)="!" then call EXECUTE substr(in,2)
- else if left(in,1)\=cmdchar then do
-  if query\='' then call SEND 'PRIVMSG' query ':'in
-  else if target\=0 then call SEND 'PRIVMSG' target ':'in
+ else if left(in,1)/=cmdchar then do
+  if query/='' then call SEND 'PRIVMSG' query ':'in
+  else if target/=0 then call SEND 'PRIVMSG' target ':'in
   else call S 'You should join a channel or query a user first'
  end
  else if left(in,2)=cmdchar' ' then call SEND 'PRIVMSG' target ':'substr(in,3)
@@ -540,7 +540,7 @@ SHELL:
   call COMMAND com par
  end
  return
-
+ 
 COMMAND:
  parse arg q r; out=; upper q
  select
@@ -551,7 +551,7 @@ COMMAND:
   when abbrev('CATALOG',q,2) then do; catmode=1; out='LIST' r; end
   when abbrev('CHANNEL',q,1) then do
    if r="" then do; call S "Talking to" target; return; end
-   if target\="" & target\=0 then call SEND("PART" target);
+   if target/="" & target/=0 then call SEND("PART" target);
    out="JOIN" r
   end
   when abbrev('CLEAR',q,2) then "VMFCLEAR"
@@ -573,7 +573,7 @@ COMMAND:
   when abbrev('INTERPRET',q,3) then call INTERP r
   when abbrev('ASSIGN',q,3) then call ASSIGN r
   when abbrev('INVITE',q,1) then do
-   if words(r)=1 & target\=0 then out='INVITE' r target
+   if words(r)=1 & target/=0 then out='INVITE' r target
    else out='INVITE' r
   end
   when abbrev('LASTLOG',q,2) then call LASTLOG r
@@ -606,7 +606,7 @@ COMMAND:
   end
   when q='STOP' & sourcing then abortsource=1
   when abbrev('TALKTO',q,2) then do
-   if r\="" then target=translate(word(r,1))
+   if r/="" then target=translate(word(r,1))
    call S 'Now talking to' target
   end
   when abbrev('TELL',q,2) then call TELL r
@@ -614,7 +614,7 @@ COMMAND:
   when abbrev('VERSION',q,3) then do; out='VERSION' r
    if r='' then call S 'rxIRC' vers
   end
-  when abbrev('VIEWLOG',q,2) & viewcmd\='' then do
+  when abbrev('VIEWLOG',q,2) & viewcmd/='' then do
    address 'CMS' viewcmd logfile; say; end
   when abbrev('XAMINE',q,1) then out='WHOIS' lastsender
   when abbrev('YELL',q,1) then call TELL word(r,1) '<'ircnick'>' subword(r,2)
@@ -658,38 +658,38 @@ COMMAND:
   end
   else do
    li=cmds; out=q r
-   do while li\=''; parse var li el li
+   do while li/=''; parse var li el li
     if abbrev(el,q,1) then do; out=el r; leave; end
  end; end; end
  call SEND out
  out=; return
-
+ 
 IGNORE:
  arg a
  do words(a)
   parse var a ig a
-  z=find(ignore,ig); if z\=0 then
+  z=find(ignore,ig); if z/=0 then
    ignore=strip(delword(ignore,z,1))
   else ignore=ig ignore
  end
  call OUT 'You are ignoring:' ignore
  if quiet then call S "And you don't send notices about it (quiet ignore)."
  return
-
+ 
 QUERY:
  parse arg qq
- if query\='' then call S 'Terminating query with' query
+ if query/='' then call S 'Terminating query with' query
  query=qq
- if qq\='' then call S 'Starting a query with' qq
+ if qq/='' then call S 'Starting a query with' qq
  else call S 'Talking to' target
  return
-
+ 
 LASTLOG:
  arg a
  if ^datatype(a,"W") | a<1 | a>80 then a=20
  else a=a-1
  'VMFCLEAR'; call S lo'Messages received last:'
- do i=curll-a to curll; if ll.i\='' then call OUT hi'|'yo||ll.i; end
+ do i=curll-a to curll; if ll.i/='' then call OUT hi'|'yo||ll.i; end
  return
 
 LOGGING:
@@ -702,15 +702,15 @@ LOGGING:
   say 'Logging ended.'; log=0; end
  else call S 'Logging is' onoff.log
  return
-
+ 
 S:
  parse arg k
  if translate(v.display)\='OFF' then say k
- if logevent\=0 then do
+ if logevent/=0 then do
   curll=curll+1; ll.curll=x; logevent=0; k=curll-50; ll.k=; end
  if log then writelog k
  return
-
+ 
 OUT:
  parse arg x
  if x="" then return
@@ -727,7 +727,7 @@ OUT:
  end
  call S copies(" ",q)x
  return
-
+ 
 CONNECT:
  parse arg ircserver port .
  if ircserver="" then do
@@ -735,22 +735,22 @@ CONNECT:
   return
  end
  if datatype(port)="NUM" then ircport = port
- if sock\='' then do; call SEND("QUIT"); call SHUT; "CP SLEEP 3 SEC"; end
+ if sock/='' then do; call SEND("QUIT"); call SHUT; "CP SLEEP 3 SEC"; end
  in.2=me x2c('4b404b') ':'ircname
  parse value SOCKET('SOCKET', 'AF_INET', 'SOCK_STREAM') with rc sock etc
- if rc\=0 then do; sock=; call BYE "socket error:" etc; end
+ if rc/=0 then do; sock=; call BYE "socket error:" etc; end
  parse value SOCKET('SETSOCKOPT', sock,'SOL_SOCKET','SO_ASCII','ON') with rc . etc
- if rc\=0 then call BYE "SetSockOpt error:" etc
+ if rc/=0 then call BYE "SetSockOpt error:" etc
  call S "Connecting to" ircserver "on port" ircport"." etc
  parse value SOCKET('CONNECT', sock, 'AF_INET' ircport ircserver) with rc . etc
- if rc\=0 then call BYE "connect error:" etc
+ if rc/=0 then call BYE "connect error:" etc
  parse value SOCKET('IOCTL', sock, 'FIONBIO', 1) with rc . etc
- if rc\=0 then call BYE "nonblocking I/O:" etc
+ if rc/=0 then call BYE "nonblocking I/O:" etc
  call SEND(x2c('D5C9C3D2') ircnick)
  call SEND(x2c('E4E2C5D9') in.2)
  call SOURCE "PROFILE", 1
  return
-
+ 
 CTCP:
  parse arg fla bla
  if pos(msa,bla)=0 then return 1
@@ -770,22 +770,22 @@ CTCP:
   otherwise if fla=1 then call MSAREPLY "ERRMSG Huh? Can't do" ctcp
  end
  return 0
-
+ 
 MSAREPLY:
  parse arg lyrics
  call SEND("NOTICE" s ":"msa||lyrics||msa)
  return
-
+ 
 SYNTAX:
  say errortext(rc)
  return
-
+ 
 HALT:
  call BYE "halt request"
 BYE:
  parse arg reason
  save_rc = rc
- if reason\="" then call S "Terminating because of" reason '('rc')'
+ if reason/="" then call S "Terminating because of" reason '('rc')'
  if log then do
   writelog "<--> IRC session ended on" date() "at" time()
   "FINIS * * *"
@@ -800,14 +800,14 @@ BYE:
  'CP TERM LINEND' a 'CHARDEL' k
  i=2; parse var qt.i 'LINESIZE' a',' .
  'CP TERM LINESIZE' a
- if sock\='' then do
+ if sock/='' then do
   call SHUT
   parse value SOCKET('TERMINATE') with .
   "NUCXDROP RXSOCKET"
  end
  if have_rxwt then RESETVALUE('ALL')
  exit save_rc
-
+ 
 ACTION:
  parse arg q r
  select
@@ -833,7 +833,7 @@ ACTION:
  if r="" then r=a'.'
  else r=word(a,1) r'.'
  return 1
-
+ 
 FINDM: procedure
  arg patlist, token
  do words(patlist)
@@ -841,7 +841,7 @@ FINDM: procedure
   if MATCH(a,token) then return 1
  end
  return 0
-
+ 
 MATCH: procedure
  arg pattern, token
  do i = 1 by 1 while i < length(pattern)
@@ -856,7 +856,7 @@ MATCH: procedure
   end
  end
  return MATCHINT(pattern,token)
-
+ 
 MATCHINT: procedure
  arg pattern, token
  if pattern == token then return 1
@@ -902,7 +902,7 @@ MATCHINT: procedure
   end
  end
  call BYE 'a mistake'
-
+ 
 SEND:
  parse arg qp
  if qp='' then return
@@ -913,18 +913,18 @@ SEND:
  else do
   qp=translate(qp,beep||bold,beepch||boldch)
   parse value SOCKET('WRITE', sock, qp||cr||lf) with rc . etc
-  if rc\=0 then call BYE "socket write error:" etc
+  if rc/=0 then call BYE "socket write error:" etc
  end
  return
-
+ 
 SHUT:
  a=sock; sock=; servername=;
  parse value SOCKET('SHUTDOWN', a,'BOTH') with rc . etc
- if rc\=0 then call BYE "socket shut error:" etc
+ if rc/=0 then call BYE "socket shut error:" etc
  parse value SOCKET('CLOSE', a) with rc . etc
- if rc\=0 then call BYE "socket close error:" etc
+ if rc/=0 then call BYE "socket close error:" etc
  return
-
+ 
 NICE:
  parse arg a"@"bb; if bb="" then bb=mynode
  if nice.a.bb^='*' then do
@@ -939,7 +939,7 @@ NICE:
   nice.a.bb='*';end
  if a='RSCS' then return bb
  return a
-
+ 
 U@N:
  parse arg q p; if q='' then return 0 'missing args'
  upper q; parse var q q'@'r
@@ -958,12 +958,12 @@ U@N:
   return a r p
  end
  u@n.q = q mynode;return q mynode p
-
+ 
 TELL:
  parse arg tea
  parse value U@N(tea) with xid xnod tea
  if xid=0 then do
-  call OUT xnod tea
+   call OUT xnod tea
   return
  end
  err=; if translate(left(tea,4))='VIA ' then do
@@ -1008,9 +1008,9 @@ TELL:
    if rc>0 then err='Rc' rc 'from' via'.'
    if rc<0 then do;rc=24;err='Invalid VIA'; end
  end; end
- if err\='' then call OUT strip(translate(err,' ','15'x))
+ if err/='' then call OUT strip(translate(err,' ','15'x))
  return
-
+ 
 SOURCE:
  arg a, b
  sourcenum=sourcenum+1
@@ -1020,8 +1020,8 @@ SOURCE:
  end
  a=a 'RXIRC *'
  "STATE" a
- if rc\=0 then do
-  if b\=1 then call S 'Could not access' a
+ if rc/=0 then do
+  if b/=1 then call S 'Could not access' a
  end
  else do
   'MAKEBUF'; 'EXECIO * DISKR' a '(FIFO FINIS'; skiplines=0;
@@ -1040,7 +1040,7 @@ SOURCE:
   abortsource=0; sourcing=0; 'DROPBUF'
  end
  return
-
+ 
 TOGGLE:
  parse arg n o
  if ^datatype(n,'W')|n<1|n>24 then do
@@ -1051,7 +1051,7 @@ TOGGLE:
  call SHELL strip(com)
  drop sep
  return
-
+ 
 EXPR:
  procedure
  parse arg expr
@@ -1059,13 +1059,13 @@ EXPR:
  INTERPRET("expr = ("expr")")
  signal off SYNTAX
  return expr
-
+ 
 INTERP:
  procedure
  arg statement
  signal on SYNTAX; INTERPRET(statement); signal off SYNTAX
  return rc
-
+ 
 ASSIGN:
  parse arg asto asfrom
  signal on SYNTAX; INTERPRET(statement); signal off SYNTAX
