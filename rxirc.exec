@@ -1,3 +1,22 @@
+/*
+   Local changes for VM/ESA 1.2.1 (REXX370 Vers. 4.00) or greater
+    -> The variable "b" in the routine "NICE" (around line 802-815)
+       was changed to "bb" because of the following change:
+ 
+ (c) Copyright IBM Corporation 1990, 1993
+ 
+"462E   Error 15 running fn ft, line nn:  Invalid hexadecimal or binary
+        string
+ 
+ Explanation:  Binary strings were new in VM/ESA Release 2, and the
+ language processor may now be considering the string in your statement
+ to be binary when that was not your intention.
+ 
+ ...   Or you may have put the 1-character symbol X, x, B, or b (the name
+ of the variable X or B, respectively) after a literal string, when the
+ string is not intended as a hexadecimal or binary specification."
+*/
+ 
 /* rxIRC
  * Internet Relay Chat client program for VM/CMS systems
  * written by Carl 'LynX' v. Loesch (loesch@informatik.uni-oldenburg.de)
@@ -7,6 +26,10 @@
  *    Scott Maxell, Juan Courcoul, Rob Blais, Mike Letourneau, Grant Pair
  *    (in historical order mostly).   Thank y'all very much!
  *
+
+
+
+
  * requires RXSOCKET MODULE version 2 by Arty Ecock (eckcu@cunyvm.bitnet)
  *
  * Copyright (C)1991,2,3 by Lynx & CvO University Oldenburg, Germany
@@ -16,7 +39,7 @@
  * By the way, this is _not_ the source code of rxIRC. There exists a
  * special file IRC PREXX which when run through a preprocessor produces
  * the actual RXIRC EXEC. That file is commented. This one is not.
- */ vers='2.0'; trace 'O'
+ */ vers='2.0.1'; trace 'O'
  address "COMMAND"; signal on HALT; "VMFCLEAR"
  cmds='AWAY AWAIT ADMIN CHANNEL CONNECT DEOP DIE HASH INFO ISON JOIN KICK',
    'KILL LIST LINKS LUSERS MODE MAIL MOTD NAMES NICK NOTICE NOTE OPER PASS',
@@ -26,6 +49,8 @@
  invitation=; away=; ll.=; curll=1; logevent=0; target=time('R')
  v.=; al.=; varnames=; aliasnames=; cmdchar=; userinfo=; sourcing=0
  have_rxwt=0; who_empty=0; catmode=0; catlist=; abortsource=0; skiplines=0
+ 
+ 
  "EXECIO * CP (STEM PF. STRING QUERY PF"
  do i=1 to pf.0
   a=word(pf.i,2)
@@ -37,9 +62,9 @@
  "CP TERM CHARDEL OFF"
  "CP TERM LINESIZE 130"
  sock=; buffer=; alphalo=xrange('a','z'); alphahi=xrange('A','Z')
- lf='25'x; cr='0d'x; msa='01'x; rev='02'x; beep='2f'x; undl='32'x
+ lf='25'x; cr='0d'x; msa='01'x; rev='02'x; beep='2fx; undl='32'x
  bold='1f'x; hi='1de8'x; lo='1d60'x; yo='1d44'x
- nice.=; u@n.=; via.=;
+ nice.=""; u@n.=; via.=;
  realname=; servername=;
  ignore_reply = "Your messages are not being received."
  "IDENTIFY (LIFO"; pull me . mynode . rscs a .
@@ -781,18 +806,18 @@ SHUT:
  return
  
 NICE:
- parse arg a'@'b;if b="" then b=mynode
- if nice.a.b^='*' then do
-  if nice.a.b^='' then return nice.a.b
-  'NAMEF :userid' a ':node' b ':nick (LIFO'
-  if rc=0 then do;parse pull nice.a.b .
-   return nice.a.b;end
-  if b=mynode then do; 'NAMEF :userid' a ':node :nick (LIFO'
-   if rc=0 then do;parse pull nice.a.b .
-    pull ln .;if ln='' then return nice.a.b;end
+ parse arg a"@"bb; if bb="" then bb=mynode
+ if nice.a.bb^='*' then do
+  if nice.a.bb^='' then return nice.a.bb
+  'NAMEF :userid' a ':node' bb ':nick (LIFO'
+  if rc=0 then do;parse pull nice.a.bb .
+   return nice.a.bb;end
+  if bb=mynode then do; 'NAMEF :userid' a ':node :nick (LIFO'
+   if rc=0 then do;parse pull nice.a.bb .
+    pull ln .;if ln='' then return nice.a.bb;end
   end
-  nice.a.b='*';end
- if a='RSCS' then return b
+  nice.a.bb='*';end
+ if a='RSCS' then return bb
  return a
  
 U@N:
@@ -818,7 +843,7 @@ TELL:
  parse arg tea
  parse value U@N(tea) with xid xnod tea
  if xid=0 then do
-  call OUT xnod tea
+   call OUT xnod tea
   return
  end
  err=; if translate(left(tea,4))='VIA ' then do
@@ -868,6 +893,7 @@ TELL:
  
 SOURCE:
  arg a, b
+
  if a='' then do
   call S "You must specify a file to /source"
   return -1
@@ -881,6 +907,13 @@ SOURCE:
   'MAKEBUF'; 'EXECIO * DISKR' a '(FIFO FINIS'; skiplines=0;
   do queued(); sourcing=1
    parse pull l; if abortsource then iterate
+
+
+
+
+
+
+
    if skiplines=0 then call SHELL strip(l)
    else skiplines=skiplines-1
   end
@@ -913,6 +946,11 @@ INTERP:
  signal on SYNTAX; INTERPRET(statement); signal off SYNTAX
  return rc
  
+
+
+
+
+
 EXECUTE:
  parse arg r
  if r='' then do
