@@ -10,16 +10,19 @@
                   *** How to customize rxIRC ***
  
  
-The IRC PROFILE startup file:
-  This file should contain a series of lines that are executed by
-  rxIRC as if you would type them in as soon as you get connected to
-  a server. You could for instance do "/join #fun" or "/who bunny"
+The PROFILE RXIRC startup file:
+| This file should contain a series of lines that are /source'd by
+| rxIRC as soon as you get connected to the first server. You could
+| for instance do "join #fun" or "who bunny", probably you will
+| want to set up some aliases. See /source for more.
+| The file IRC PROFILE is obsolete. For a conversion you have
+| to rename it and remove all the command characters (the slashes).
  
 Namesfile settings:
   rxIRC gets your default nickname and full name from your namesfile
   unless otherwise specified in the command line. You can also set
   a 'motto' line by adding a :motto tag to your self-entry in your
-  namesfile which will be displayed when VERSION requests are sent
+  namesfile which will be displayed when USERINFO requests are sent
   to you while you are ircing with rxIRC.
  
 Environment settings:
@@ -28,25 +31,30 @@ Environment settings:
   IRCNAME and IRCPORT. rxIRC uses 'SELECT CENV' for compatibility with
   other IRC programs.
  
-Defaults in the RXIRC NAMES file:
-  Some defaults for the rxIRC program are defined here:
-    server:           the Internet address of an irc server
-    port:             the TCP/IP port it runs on, usually 6667
-    timeout:          when rxIRC should give up on connections
-    logging:          make it ON or OFF
-    quiet_ignore:     usually OFF
-    loud_beeps:       ON only when a BEEP MODULE is available.
-    show_numbers:     ON shows the reply numbers of server replies, for freaks.
-    list_all:         show also channels without topic in /list, i use OFF.
-    beep_char:        the character that gets translated into a beep and back.
-    highlight_char:   the char that gets translated into an inverse on ircII.
+The RXIRC PFKEYS file is obsolete. You can use the 'PF' commands
+| from PROFILE RXIRC now.
+ 
+Defaults in the RXIRC NAMES file (the rxIRC configuration file):
+    server:           The internet address of an IRC server
+    port:             The TCP/IP port it runs on, usually 6667
+|   browser:          Name of a command good for showing files.
+|                     Typically BROWSE, but if that's not there try XEDIT.
+|   timeout:          Not used anymore, you can remove it
+    logging:          Set it to ON or OFF for default logging
+    quiet_ignore:     Usually OFF
+    loud_beeps:       Switch it ON only when a BEEP MODULE is available.
+    show_numbers:     When ON, rxIRC shows the numerics of IRC server replies
+    list_all:         Show also channels without topic in /list
+|   beep_char:        The character that gets translated into a beep and back.
+|   bold_char:        If you define this one, you can make 'bold' messages
+|                     by inserting this character in your messages. They
+|                     will appear hilighted on rxIRC and bold on ircII 
+|                     clients (at least)
+|   highlight_char:   Not used anymore
+|   show_time:        When the current time will be displayed on the
+|                     screen.  Choices are 0 (never), 10 (every ten
+|                     minutes), 20 (every 20 minutes), 30 (every 30
+|                     minutes), and 60 (every 60 minutes).
  
   You might choose to copy this file onto your disk to be able to
   modify the values.
- 
---
-You have 10069612 experience points, 99159963 gold coins, 9127 spell points.
-You also have 9999 hit points out of 9999.
-Strength: 966;  Dexterity: 939;  Intelligence: 957;  Constitution: 948.
-Your age: 50 days 15 hours 37 minutes 32 seconds.
- 
