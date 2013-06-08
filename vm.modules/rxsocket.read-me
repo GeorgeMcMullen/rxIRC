@@ -1,0 +1,609 @@
+TCP/IP Socket support function for REXX (Rxsocket & Rexxwait)
+Arty Ecock  <eckcu@cunyvm.cuny.edu>
+CUNY
+ 
+ 
+Last revised: 17 February 1993
+ 
+This file contains tips for converting applications from
+RXSOCKET Version 1 to RXSOCKET Version 2.
+ 
+A word about defaults:
+----------------------
+ 
+RXSOCKET Version 2 reads the TCPIP DATA file in order to establish
+non-default values for such things as the TCP/IP server userid,
+the Name Server IP addresses to use for name resolution, the local
+Domain Origin, Resolver Timeout value, etc.
+ 
+If the TCPIP DATA file is *NOT* available, the following defaults are
+used:
+ 
+TCPIPuserid        TCPIP
+HostName           (the value returned from the TCPIP server)
+DomainOrigin       (null string)
+NSinterAddr        14.0.0.0
+NSportAddr         53
+ResolveVia         UDP
+ResolverTimeout    30
+ResolverUdpRetries 1 (not fully supported; soon, though)
+ 
+The value of "TCPIPuserid" can be overridden by specifying a value for
+the fourth argument of an "Initialize" subfunction:
+ 
+   Parse Value Socket('Initialize', 'Test', 40, 'TCPIPTST') With rc ...
+   -or-
+   Parse Value Socket('Initialize', 'Test', ,'TCPIPTST') With rc ...
+ 
+RXSOCKET Version 2 uses a specific hierarchy when searching for an
+appropriate set of ASCII/EBCDIC translate tables.  Using the example
+"Initialize" subfunction above, the following translate tables are
+sought: (the first table found is used)
+ 
+   1) "TEST TCPXLBIN *".  Note that the socket-set name "Test" has
+      been upper-cased.
+ 
+   2) If not found, RXSOCKET searches for "userid TCPXLBIN *", where
+      "userid" is the VM userid using RXSOCKET.
+ 
+   3) If not found, RXSOCKET searches for "STANDARD TCPXLBIN *".
+      (STANDARD TCPXLBIN is usually supplied with VM TCP/IP on the
+      TCPMAINT 592 minidisk.)
+ 
+   4) Then "RXSOCKET TCPXLBIN *".  These tables are *IDENTICAL* to
+      the tables that are hard-coded into RXSOCKET.
+ 
+      RXSOCKET TCPXLATE contains the source version of these translate
+      tables.  This file is converted to RXSOCKET TCPXLBIN by using the
+      CONVXLAT MODULE supplied with TCP/IP (on the TCPMAINT 592 disk).
+ 
+      RXSOCKET TCPXLATE and STANDARD TCPXLATE can be used as templates
+      for cistomizing your own translate tables.
+ 
+   5) If none of these tables are found, an internal set of ASCII/EBCDIC
+      translate tables are used.
+ 
+STANDARD TCPXLBIN is usually suitable for most applications.  Problems
+with square brackets, for example, can usually be overcome by creating
+a customized TCPXLBIN file.
+ 
+ 
+A word about the format of the new result string:
+-------------------------------------------------
+ 
+In RXSOCKET, the result of a SOCKET function call is always a character
+string.  This string usually contains several items.  The first item
+will always be a return code value.  A return code of "0" indicates that
+the function call completed without error.  The remaining items in the
+result string contain function-specific values.
+ 
+Example 1:
+   Parse Value Socket('Initialize', 'Test') With rc sockset count server
+ 
+   might yield:
+ 
+   rc      = "0"             Return code "0" (Success)
+   sockset = "Test"          The name of this socket-set
+   count   = "40"            Default number of sockets available
+   server  = "TCPIP"         Default TCP/IP server userid
+ 
+Example 2:
+   Call Socket 'Initialize', 'Test'
+   Parse Var result rc sockset count server
+ 
+   should yield the same values.  (Remember that the "result" variable
+   is set by REXX when you "Call" a REXX function.)
+ 
+If the return code value is other than "0", an error is indicated.  In
+such a case, the second item in the result string corresponds to an
+"Errno Value" as described in Chapter 3 of the IBM TCP/IP Programmer's
+Reference manual.  "EBADF", "EWOULDBLOCK", "EFAULT", "ENOPROTOOPT" and
+"EINVALIDRXSOCKETCALL" are a few of the possible values.  The remaining
+items (words) of the result string describe the error in more
+understandable terms (I hope).
+ 
+Examples:
+   "9 EBADF Bad file number"
+   "35 EWOULDBLOCK Operation would block"
+   "36 EINPROGRESS Operation now in progress"
+   "60 ETIMEDOUT Connection timed out"
+   "61 ECONNREFUSED Connection refused"
+ 
+   Note that rc=36 is not necessarily an error condition.
+   "EINPROGRESS" may be returned for certain operations on non-blocking
+   sockets.
+ 
+   See Chapter 3 of the IBM TCP/IP Programmer's Reference manual for
+   information on which "Errno Values" correspond to which socket calls.
+ 
+Thus, you must take care when parsing the result of a RXSOCKET
+subfunction.  Using a trailing "." on a "Parse" statement may cause
+you to lose the descriptive text in the case of an error.
+ 
+Example 1:
+   Parse Value Socket('Close', socket) With rc .
+ 
+   If "rc" was not "0" then the "Errno Value" and descriptive text of
+   the error will be lost.
+ 
+Example 2:
+   Parse Value Socket('Close', socket) With rc rest
+ 
+   In this case, the "rest" variable will contain both
+   "Errno Value" and descriptive text when rc is not "0".
+ 
+Example 3:
+   Parse Value Socket('Close', socket) With result
+   Parse Var result rc .
+   If rc^=0 Then Do
+      Parse Var result errno errno_value errno_text
+      ...
+   End
+ 
+   -or-
+ 
+   Call Socket 'Close', socket
+   Parse Var result rc .
+   If rc^=0 Then Do
+      Parse Var result errno errno_value errno_text
+      ...
+   End
+ 
+   This is fine if you like to use many "Parse" statements.
+ 
+Example 4:
+   Parse Value Socket('Close', socket) With result
+   If Word(result,1)^=0 Then Do
+      Say TcpError("Error during Close")
+      Call Exit
+   End
+ 
+   -or-
+ 
+   Parse Value Socket('Close', socket) With rc .
+   If rc^=0 Then Do
+      Say TcpError("Error during Close")
+      Call Exit
+   End
+ 
+   The former is nice, but the latter is my personal favorite.
+   The "TcpError" call in this example would yield:
+ 
+   "Error during Close:" errno_text
+ 
+   where "errno_text" is the descriptive text associated with the
+   errno value.
+ 
+   Example:
+   "Error during Close: Bad file number"
+ 
+   There's also less parsing, fuss, and mess with this example.
+ 
+ 
+Comparison of RXSOCKET Version 2 functions to Version 1
+-------------------------------------------------------
+ 
+The Version 2 function and result string will be listed first,
+followed by the Version 1 function call.
+ 
+ 
+function: Socket('Initialize', subtaskid, <maxdesc>, <serverid>)
+result:   rc subtaskid maxdesc serverid
+ 
+Version1: rc = Socket('Initialize', subtaskid, serverid, maxdesc)
+ 
+          Note: "maxdesc" and "serverid" have swapped places in
+                RXSOCKET Version 2.
+                "rc" is no longer set to the "maxdesc" value.
+ 
+ 
+function: Socket('Accept', socket)
+result:   rc newsocket name
+ 
+Version1: rc = Socket('Accept', socket, name)
+ 
+          Note: "name" has been moved into the result string.
+                "name" is now returned as "AF_INET port nnn.nnn.nnn.nnn".
+                "rc" is no longer set to the "newsocket" number.
+ 
+ 
+function: Socket('Bind', socket, name)
+result:   rc
+ 
+Version1: rc = Socket('Bind', socket, name)
+ 
+          Note: "name" is now specified as "AF_INET port ipaddr|hostname"
+ 
+          Examples:
+             "AF_INET INPORT_ANY CUNYVM"
+             "AF_INET 123 CUNYVM.CUNY.EDU"
+             "AF_INET   0 CUNYVM.CUNY.EDU"
+             "AF_INET  42 128.228.1.2"
+             "AF_INET  12 INADDR_ANY"
+             "AF_INET"
+             "AF_INET 77"
+             "AF_INET INPORT_ANY INADDR_ANY"
+             "AF_INET INPORT_ANY ANY"
+             "AF_INET ANY ANY"
+             "AF_INET 23 LOOPBACK"
+             "AF_INET INPORT_ANY INADDR_BROADCAST"
+             "AF_INET INPORT_ANY BROADCAST"
+ 
+          You get the idea :-)
+ 
+ 
+function: Socket('Close', socket)
+result:   rc
+ 
+Version1: rc = Socket('Close', socket)
+ 
+ 
+function: Socket('Connect', socket, name)
+result:   rc
+ 
+Version1: rc = Socket('Connect', socket, name)
+ 
+          Note: "name" is now specified as "AF_INET port ipaddr|hostname".
+ 
+ 
+function: Socket('Fcntl', socket, cmd, <data>)
+result:   rc <data>
+ 
+Version1: rc = Socket('Fcntl', socket, cmd, data)
+ 
+          Note: "Blocking" and "Non-Blocking" have been added as
+                permissible values for "data".
+                "rc" is no longer set to the value of "data" (in the
+                case of "F_GETFL").
+ 
+ 
+function: Socket('GetClientId', <domain>)
+result:   rc clientid
+ 
+Version1: rc = Socket('GetClientId', domain, clientid)
+ 
+          Note: "clientid" has been moved into the result string.
+ 
+ 
+function: Socket('GetDomainName')
+result:   rc domain
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+          The Version 1 GetHostName used to append the domain
+          origin to the host name.  The "GetDomainName" subfunction
+          has been added to return the domain origin string.
+          "GetHostName" has been changed to return just the host
+          name.
+ 
+ 
+function: Socket('GetDTableSize') not implemented in RXSOCKET Version 2
+ 
+Version1: rc = Socket('GetDTableSize')
+ 
+          The number of sockets for a specified socket set may be
+          obtained using the "SocketSetStatus" subfunction.  The
+          number of sockets is also returned in the result string
+          of the "Initialize" subfunction.
+ 
+ 
+function: Socket('GetHostByAddr', ipaddr)
+result:   rc hostname
+ 
+Version1: rc = Socket('GetHostByAddr', hostaddr, hostname)
+ 
+          Note: "hostname" has been moved into the result string.
+ 
+ 
+function: Socket('GetHostByName', hostname)
+result:   rc ipaddr1 ipaddr2 ... ipaddrN
+ 
+Version1: rc = Socket('GetHostByName', hostname)
+ 
+          Note: "rc" is no longer set to the "ipaddr" value.  The
+                result string may contain a list of "ipaddr" values.
+                If the specified hostname is not multi-homed, then
+                a single "ipaddr" value is returned (in the form:
+                "nnn.nnn.nnn.nnn").
+ 
+ 
+function: Socket('GetHostId')
+result:   rc ipaddr
+ 
+Version1: rc = Socket('GetHostId')
+ 
+          Note: "rc" is no longer set to the "ipaddr" value.
+                "ipaddr" is returned in the form "nnn.nnn.nnn.nnn".
+ 
+ 
+function: Socket('GetHostName')
+result:   rc hostname
+ 
+Version1: rc = Socket('GetHostName', hostname)
+ 
+          Note: "hostname" has been moved into the result string.
+                "hostname" is returned as the "HostName" value from
+                 TCPIP DATA (or the value obtained from the TCPIP
+                 server) *WITHOUT* the Domain Origin string appended.
+ 
+ 
+function: Socket('GetPeerName', socket)
+result:   rc name
+ 
+Version1: rc = Socket('GetPeerName', socket, name)
+ 
+          Note: "name" has been moved into the result string.
+                "name" is now returned as "AF_INET port nnn.nnn.nnn.nnn".
+ 
+ 
+function: Socket('GetProtoByName', protocol_name)
+result:   rc protocol_number
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+ 
+ 
+function: Socket('GetProtoByNumber', protocol_number)
+result:   rc protocol_name
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+ 
+ 
+function: Socket('GetServByName', service_name, <service_protocol>)
+result:   rc service_name service_port service_protocol
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+          *All* values listed in RFC1340 for "service_name" are
+          supported.  See "well known ports" in RFC1340.
+ 
+function: Socket('GetServByPort', service_port, <service_protocol>)
+result:   rc service_name service_port service_protocol
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+          *All* values listed in RFC1340 for "service_port" are
+          supported.  See "well known ports" in RFC1340.
+ 
+ 
+function: Socket('GetSockName', socket)
+result:   rc name
+ 
+Version1: rc = Socket('GetSockName', socket, name)
+ 
+          Note: "name" has been moved into the result string.
+                "name" is now returned as "AF_INET port nnn.nnn.nnn.nnn".
+ 
+ 
+function: Socket('GetSockOpt', socket, level, optname)
+result:   rc optval
+ 
+Version1: rc = Socket('GetSockOpt', socket, level, optname, optval)
+ 
+          Note: "optval" has been moved into the result string.
+                Values for "optval" are now returned in a more
+                human-usable format.
+ 
+ 
+function: Socket('GiveSocket', socket, clientid)
+result:   rc
+ 
+Version1: rc = Socket('GiveSocket', socket, clientid)
+ 
+          Note: This subfunction now works.
+                "clientid" is now specified as "AF_INET subtaskid userid".
+ 
+ 
+function: Socket('Ioctl', socket, cmd, <data>)
+result:   rc <data>
+ 
+Version1: rc = Socket('Ioctl', socket, cmd, data)
+ 
+          Note: This subfunction now works.
+                Values for "data" are now accepted and returned in a
+                more human-usable format.
+ 
+ 
+function: Socket('Listen', socket, <backlog>)
+result:   rc
+ 
+Version1: rc = Socket('Listen', socket, backlog)
+ 
+          Note: "backlog" now defaults to "10".
+ 
+ 
+function: Socket('Path') removed from RXSOCKET Version 2
+ 
+Version1: rc = Socket('Path', subtaskid)
+ 
+          Note: This function has been renamed to "SocketSet".
+ 
+ 
+function: Socket('Read', socket, <length>)
+result:   rc length data
+ 
+Version1: rc = Socket('Read', socket, data, length)
+ 
+          Note: "rc" is no longer set to the number of bytes read.
+                "length" defaults to "10000", with a maximum value
+                of "100000".
+                "data" has been moved into the result string.
+ 
+ 
+function: Socket('Recv', socket, <length>, <flags>)
+result:   rc length data
+ 
+Version1: rc = Socket('Recv', socket, data, length, flags)
+ 
+          Note: "rc" is no longer set to the number of bytes read.
+                "length" defaults to "10000", with a maximum value
+                of "100000".
+                "data" has been moved into the result string.
+                "flags" may now contain more than a single value.
+ 
+ 
+function: Socket('RecvFrom', socket, <length>, <flags>)
+result:   rc name length data
+ 
+Version1: rc = Socket('RecvFrom', socket, data, length, flags, name)
+ 
+          Note: "rc" is no longer set to the number of bytes read.
+                "length" defaults to "10000", with a maximum value
+                of "100000".
+                "data" has been moved into the result string.
+                "name" has been moved into the result string.
+                "flags" may now contain more than a single value.
+ 
+ 
+function: Socket('Resolve', ipaddr|hostname, <timeout>)
+result:   rc ipaddr hostname
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+ 
+          Note: I use "Resolve" instead of "GetHostByAddr" and
+                "GetHostByName" since "Resolve" does not care
+                whether its input is an IP address or a hostname.
+                "timeout" allows you to override the "ResolverTimeout"
+                value in TCPIP DATA.
+ 
+ 
+function: Socket('Select', 'Read n Write n Exception n', <timeout>)
+result:   rc numready READ n n WRITE n n n EXCEPTION n
+ 
+Version1: rc = Socket('Select', nfds, rmask, wmask, xmask, timeout)
+ 
+          Note: All the bitmask manipulation functions (FD_SET, FD_CLR,
+                etc.) have been removed.
+                Specifying "0" as a value for "n" still refers to the
+                console ("Read 0" means, "wait for a Console Attention").
+                REXXWAIT is far superior in function to "Select"
+                ("Wait('Cons Time 5 Seconds Socket' socket 'SMSG')" is
+                certainly lots more versatile.)
+                "Select" is handy for applications that don't require
+                enhanced "wait" facilities.
+ 
+ 
+function: Socket('Send', socket, data, <flags>)
+result:   rc length
+ 
+Version1: rc = Socket('Send', socket, data, flags)
+ 
+          Note: "rc" is no longer set to the number of bytes transmitted.
+ 
+ 
+function: Socket('SendTo', socket, data, <flags>, name)
+result:   rc length
+ 
+Version1: rc = Socket('SendTo', socket, data, flags, name)
+ 
+          Note: "rc" is no longer set to the number of bytes transmitted.
+                "name" is now specified as "AF_INET port ipaddr|hostname".
+ 
+ 
+function: Socket('SetSockOpt', socket, level, optname, optval)
+result:   rc
+ 
+Version1: rc = Socket('SetSockOpt', socket, level, optname, optval)
+ 
+          Note: "optval" can now be expressed in a more human-usable
+                format.
+                An "optname" of "SO_ASCII" indicates that the data
+                flowing across the socket should be "ASCII".  Please
+                note that RXSOCKET Version 1 used "SO_EBCDIC" for
+                this purpose.  "SO_EBCDIC" now indicates that the
+                data flowing across the socket is EBCDIC and is to
+                be treated as such.  "So_ASCII" set to "On" forces
+                data translation to and from EBCDIC (thus allowing
+                ASCII data to flow across the socket).
+ 
+ 
+function: Socket('ShutDown', socket, <how>)
+result:   rc
+ 
+Version1: rc = Socket('ShutDown', socket, how)
+ 
+          Note: "how" now defaults to "BOTH" (instead of "FROM").
+ 
+ 
+function: Socket('Socket', <domain>, <type>, <protocol>)
+result:   rc newsocket
+ 
+Version1: rc = Socket('Socket', domain, type, protocol)
+ 
+          Note: "rc" is no longer set to the value of "newsocket".
+                "domain" defaults to "AF_INET".
+                "type" defaults to "Sock_Stream".
+                "protocol" defaults to "IPPROTO_TCP".
+ 
+ 
+function: Socket('SocketSet', <subtaskid>)
+result:   rc subtaskid
+ 
+Version1: rc = Socket('Path', subtaskid)
+ 
+          Note: When switching to a new socket set, the name of the
+                previously active socket set is returned.  This makes
+                it easier to switch back if switching between many
+                socket sets.  If switching between 2 socket sets,
+                you needn't bother remembering the previously active
+                socket set name, since RXSOCKET maintains socket sets
+                on a push-down stack in Least Recently Used order.
+ 
+ 
+function: Socket('SocketSetList')
+result:   rc subtaskid1 subtaskid2 ... subtaskidN
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+ 
+ 
+function: Socket('SocketSetStatus', <subtaskid>)
+result:   rc subtaskid status <connectinfo>|<reason>
+ 
+          No corresponding RXSOCKET Version 1 subfunction.
+ 
+ 
+function: Socket('TakeSocket', clientid, hissocket)
+result:   rc newsocket
+ 
+Version1: rc = Socket('TakeSocket', clientid, hissocket)
+ 
+          Note: This subfunction now works.
+                "rc" is no longer set to the value of "newsocket".
+                "clientid" is now specified as "AF_INET subtaskid userid".
+ 
+ 
+function: Socket('Terminate', <subtaskid>)
+result:   rc subtaskid
+ 
+Version1: rc = Socket('Terminate', subtaskid)
+ 
+          Note: if "subtaskid" is omitted, the "active" socket set
+                is terminated.  In any case, the name of the terminated
+                socket set is returned in the result string.
+ 
+ 
+function: Socket('Version')
+result:   rc REXX/SOCKETS version date
+ 
+          rs = Socket('Version')
+ 
+          Note: "rs" is similar in format to the result string.
+                The associated "version" values. of course, differ.
+ 
+ 
+function: Socket('Write', socket, data)
+result:   rc length
+ 
+Version1: rc = Socket('Write', socket, data)
+ 
+          Note: "rc" is no longer set to the number of bytes transmitted.
+ 
+ 
+A word from your sponsors:
+--------------------------
+ 
+Rainer and I worked long and hard on this collaboration.  We hope it
+was a successful one.  We love feedback, comments and suggestions.
+I personally prefer chocolate.
+ 
+Please let us know if you run into any problems with REXX/SOCKETS.
+ 
+Cheers,
+Arty Ecock    - CUNY/UCC
+Rainer Hauser - IBM, Zurich
